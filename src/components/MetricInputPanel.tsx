@@ -26,7 +26,7 @@ export function MetricInputPanel({ title, variant, values, onChange }: MetricInp
 
   return (
     <Card className={cn(
-      'overflow-hidden transition-all duration-200',
+      'overflow-visible transition-all duration-200',
       isProjected && 'border-t-4 border-t-[#3fb3d4] shadow-md'
     )}>
       <CardHeader className={cn(
