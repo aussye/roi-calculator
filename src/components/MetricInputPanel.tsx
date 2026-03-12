@@ -2,6 +2,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { NumberInput } from './NumberInput'
+import { SliderInput } from './SliderInput'
 import type { MetricInputs } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -32,30 +33,35 @@ export function MetricInputPanel({ title, variant, values, onChange }: MetricInp
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
-        <NumberInput
-          label="Monthly Leads"
-          value={values.monthlyLeads}
-          onChange={(v) => updateField('monthlyLeads', v)}
-        />
-        <NumberInput
-          label="Booking Rate"
-          value={values.bookingRate}
-          onChange={(v) => updateField('bookingRate', v)}
-          suffix="%"
-        />
-        <NumberInput
-          label="Closing Rate"
-          value={values.closingRate}
-          onChange={(v) => updateField('closingRate', v)}
-          suffix="%"
-        />
-        <NumberInput
-          label="Average Ticket"
-          value={values.averageTicket}
-          onChange={(v) => updateField('averageTicket', v)}
-          prefix="$"
-        />
+      <CardContent className="flex flex-col gap-6 pt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <NumberInput
+            label="Revenue Goal"
+            value={values.revenueGoal}
+            onChange={(v) => updateField('revenueGoal', v)}
+            prefix="$"
+          />
+          <NumberInput
+            label="Average Ticket"
+            value={values.averageTicket}
+            onChange={(v) => updateField('averageTicket', v)}
+            prefix="$"
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <SliderInput
+            label="Close Rate"
+            value={values.closeRate}
+            onChange={(v) => updateField('closeRate', v)}
+            variant={variant}
+          />
+          <SliderInput
+            label="Booking Rate"
+            value={values.bookingRate}
+            onChange={(v) => updateField('bookingRate', v)}
+            variant={variant}
+          />
+        </div>
       </CardContent>
     </Card>
   )

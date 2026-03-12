@@ -1,27 +1,33 @@
 import type { MetricInputs, CalculatedResults, DeltaResults } from './types'
 
 export function calculateResults(inputs: MetricInputs): CalculatedResults {
+  const closeDecimal = inputs.closeRate / 100
   const bookingDecimal = inputs.bookingRate / 100
-  const closingDecimal = inputs.closingRate / 100
 
-  const bookedAppointments = inputs.monthlyLeads * bookingDecimal
-  const jobsWon = bookedAppointments * closingDecimal
-  const monthlyRevenue = jobsWon * inputs.averageTicket
-  const annualRevenue = monthlyRevenue * 12
-  const valuePerLead = inputs.monthlyLeads > 0
-    ? monthlyRevenue / inputs.monthlyLeads
+  // Reverse math: revenue goal → jobs → appointments → leads
+  const jobsRequired = inputs.averageTicket > 0
+    ? inputs.revenueGoal / inputs.averageTicket
     : 0
-  const valuePerJob = jobsWon > 0
-    ? monthlyRevenue / jobsWon
+  const appointmentsRequired = closeDecimal > 0
+    ? jobsRequired / closeDecimal
+    : 0
+  const leadsRequired = bookingDecimal > 0
+    ? appointmentsRequired / bookingDecimal
+    : 0
+
+  const monthlyRevenue = inputs.revenueGoal
+  const annualRevenue = monthlyRevenue * 12
+  const valuePerLead = leadsRequired > 0
+    ? monthlyRevenue / leadsRequired
     : 0
 
   return {
-    bookedAppointments,
-    jobsWon,
+    jobsRequired,
+    appointmentsRequired,
+    leadsRequired,
     monthlyRevenue,
     annualRevenue,
     valuePerLead,
-    valuePerJob,
   }
 }
 
@@ -38,7 +44,6 @@ export function calculateDelta(
     ? (annualIncrease / current.annualRevenue) * 100
     : 0
   const valuePerLeadIncrease = projected.valuePerLead - current.valuePerLead
-  const valuePerJobIncrease = projected.valuePerJob - current.valuePerJob
 
   return {
     monthlyIncrease,
@@ -46,6 +51,5 @@ export function calculateDelta(
     annualIncrease,
     annualIncreasePercent,
     valuePerLeadIncrease,
-    valuePerJobIncrease,
   }
 }

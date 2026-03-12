@@ -2,15 +2,15 @@ import type { MetricInputs } from './types'
 
 export const DEFAULTS: { current: MetricInputs; projected: MetricInputs } = {
   current: {
-    monthlyLeads: 100,
-    bookingRate: 60,
-    closingRate: 40,
+    revenueGoal: 50000,
     averageTicket: 800,
+    closeRate: 40,
+    bookingRate: 60,
   },
   projected: {
-    monthlyLeads: 150,
-    bookingRate: 75,
-    closingRate: 55,
+    revenueGoal: 100000,
     averageTicket: 1200,
+    closeRate: 55,
+    bookingRate: 75,
   },
 }

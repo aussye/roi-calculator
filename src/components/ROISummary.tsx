@@ -27,7 +27,7 @@ export function ROISummary({ currentResults, projectedResults }: ROISummaryProps
         </div>
 
         <CardContent className="p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* Hero annual number with growth icon */}
+          {/* Annual revenue increase with growth icon */}
           <div className="flex-1 text-center md:text-left space-y-1">
             <p className="text-gray-500 font-semibold text-lg uppercase tracking-wide">
               Annual Revenue Increase
@@ -64,7 +64,7 @@ export function ROISummary({ currentResults, projectedResults }: ROISummaryProps
           {/* Supporting metrics */}
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full text-center md:text-left">
             <div>
-              <p className="text-gray-500 font-medium mb-1">Monthly Revenue Delta</p>
+              <p className="text-gray-500 font-medium mb-1">Monthly Increase</p>
               <div className="flex items-center justify-center md:justify-start gap-2">
                 {delta.monthlyIncrease >= 0 ? (
                   <TrendingUp className="w-6 h-6 text-green-600" />
@@ -80,7 +80,7 @@ export function ROISummary({ currentResults, projectedResults }: ROISummaryProps
               </div>
             </div>
             <div>
-              <p className="text-gray-500 font-medium mb-1">Value Per Lead Delta</p>
+              <p className="text-gray-500 font-medium mb-1">Value Per Lead Increase</p>
               <div className="flex items-center justify-center md:justify-start gap-2">
                 {delta.valuePerLeadIncrease >= 0 ? (
                   <TrendingUp className="w-6 h-6 text-green-600" />

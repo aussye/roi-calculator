@@ -4,146 +4,143 @@ import { formatUSD, formatPercent, formatNumber } from '../utils'
 import type { MetricInputs, CalculatedResults } from '../types'
 
 // ---------------------------------------------------------------------------
-// calculateResults
+// calculateResults — reverse math (revenue goal → leads required)
 // ---------------------------------------------------------------------------
 
 describe('calculateResults', () => {
-  it('normal case: 100 leads, 60% booking, 40% closing, $800 ticket', () => {
+  it('default current: $50k goal, $800 ticket, 40% close, 60% booking', () => {
     const inputs: MetricInputs = {
-      monthlyLeads: 100,
-      bookingRate: 60,
-      closingRate: 40,
+      revenueGoal: 50000,
       averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 60,
     }
-    const result = calculateResults(inputs)
+    const r = calculateResults(inputs)
 
-    expect(result.bookedAppointments).toBe(60)
-    expect(result.jobsWon).toBe(24)
-    expect(result.monthlyRevenue).toBe(19200)
-    expect(result.annualRevenue).toBe(230400)
-    expect(result.valuePerLead).toBeCloseTo(192, 5)   // $19200 / 100
-    expect(result.valuePerJob).toBe(800)               // $19200 / 24
+    // 50000 / 800 = 62.5 jobs
+    expect(r.jobsRequired).toBeCloseTo(62.5)
+    // 62.5 / 0.40 = 156.25 appointments
+    expect(r.appointmentsRequired).toBeCloseTo(156.25)
+    // 156.25 / 0.60 = 260.4167 leads
+    expect(r.leadsRequired).toBeCloseTo(260.4167, 3)
+    expect(r.monthlyRevenue).toBe(50000)
+    expect(r.annualRevenue).toBe(600000)
+    // 50000 / 260.4167 ≈ 192
+    expect(r.valuePerLead).toBeCloseTo(192, 0)
   })
 
-  it('zero leads: all results should be 0', () => {
+  it('default projected: $100k goal, $1200 ticket, 55% close, 75% booking', () => {
     const inputs: MetricInputs = {
-      monthlyLeads: 0,
-      bookingRate: 60,
-      closingRate: 40,
-      averageTicket: 800,
+      revenueGoal: 100000,
+      averageTicket: 1200,
+      closeRate: 55,
+      bookingRate: 75,
     }
-    const result = calculateResults(inputs)
+    const r = calculateResults(inputs)
 
-    expect(result.bookedAppointments).toBe(0)
-    expect(result.jobsWon).toBe(0)
-    expect(result.monthlyRevenue).toBe(0)
-    expect(result.annualRevenue).toBe(0)
-    expect(result.valuePerLead).toBe(0)
-    expect(result.valuePerJob).toBe(0)
+    expect(r.jobsRequired).toBeCloseTo(83.333, 2)
+    expect(r.appointmentsRequired).toBeCloseTo(151.515, 2)
+    expect(r.leadsRequired).toBeCloseTo(202.02, 1)
+    expect(r.monthlyRevenue).toBe(100000)
+    expect(r.annualRevenue).toBe(1200000)
+    expect(r.valuePerLead).toBeCloseTo(495, 0)
   })
 
-  it('zero booking rate: cascades to 0 revenue and 0 jobs', () => {
+  it('zero average ticket: jobs=0, cascades to 0 appointments/leads', () => {
     const inputs: MetricInputs = {
-      monthlyLeads: 100,
-      bookingRate: 0,
-      closingRate: 40,
-      averageTicket: 800,
-    }
-    const result = calculateResults(inputs)
-
-    expect(result.bookedAppointments).toBe(0)
-    expect(result.jobsWon).toBe(0)
-    expect(result.monthlyRevenue).toBe(0)
-    expect(result.annualRevenue).toBe(0)
-    expect(result.valuePerLead).toBe(0)
-    expect(result.valuePerJob).toBe(0)
-  })
-
-  it('zero closing rate: booked appointments remain, but no revenue', () => {
-    const inputs: MetricInputs = {
-      monthlyLeads: 100,
-      bookingRate: 60,
-      closingRate: 0,
-      averageTicket: 800,
-    }
-    const result = calculateResults(inputs)
-
-    expect(result.bookedAppointments).toBe(60)
-    expect(result.jobsWon).toBe(0)
-    expect(result.monthlyRevenue).toBe(0)
-    expect(result.annualRevenue).toBe(0)
-    expect(result.valuePerLead).toBe(0)
-    expect(result.valuePerJob).toBe(0)
-  })
-
-  it('zero average ticket: no revenue even with bookings and closings', () => {
-    const inputs: MetricInputs = {
-      monthlyLeads: 100,
-      bookingRate: 60,
-      closingRate: 40,
+      revenueGoal: 50000,
       averageTicket: 0,
+      closeRate: 40,
+      bookingRate: 60,
     }
-    const result = calculateResults(inputs)
+    const r = calculateResults(inputs)
 
-    expect(result.bookedAppointments).toBe(60)
-    expect(result.jobsWon).toBe(24)
-    expect(result.monthlyRevenue).toBe(0)
-    expect(result.annualRevenue).toBe(0)
-    expect(result.valuePerLead).toBe(0)
-    expect(result.valuePerJob).toBe(0)
+    expect(r.jobsRequired).toBe(0)
+    expect(r.appointmentsRequired).toBe(0)
+    expect(r.leadsRequired).toBe(0)
+    expect(r.monthlyRevenue).toBe(50000)
+    expect(r.annualRevenue).toBe(600000)
+    expect(r.valuePerLead).toBe(0)
   })
 
-  it('large numbers: 10000 leads, 95% booking, 95% closing, $5000 ticket', () => {
+  it('zero close rate: appointments=0, cascades to 0 leads', () => {
     const inputs: MetricInputs = {
-      monthlyLeads: 10000,
-      bookingRate: 95,
-      closingRate: 95,
-      averageTicket: 5000,
+      revenueGoal: 50000,
+      averageTicket: 800,
+      closeRate: 0,
+      bookingRate: 60,
     }
-    const result = calculateResults(inputs)
+    const r = calculateResults(inputs)
 
-    const expectedBooked = 9500
-    const expectedJobs = 9025
-    const expectedMonthly = 45_125_000
-    const expectedAnnual = 541_500_000
-
-    expect(result.bookedAppointments).toBeCloseTo(expectedBooked, 5)
-    expect(result.jobsWon).toBeCloseTo(expectedJobs, 5)
-    expect(result.monthlyRevenue).toBeCloseTo(expectedMonthly, 2)
-    expect(result.annualRevenue).toBeCloseTo(expectedAnnual, 2)
-    expect(result.valuePerLead).toBeCloseTo(expectedMonthly / 10000, 2)
-    expect(result.valuePerJob).toBeCloseTo(5000, 5)
+    expect(r.jobsRequired).toBeCloseTo(62.5)
+    expect(r.appointmentsRequired).toBe(0)
+    expect(r.leadsRequired).toBe(0)
+    expect(r.valuePerLead).toBe(0)
   })
 
-  it('100% rates and a whole-number ticket produce exact integers', () => {
+  it('zero booking rate: leads=0, valuePerLead=0', () => {
     const inputs: MetricInputs = {
-      monthlyLeads: 50,
-      bookingRate: 100,
-      closingRate: 100,
+      revenueGoal: 50000,
+      averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 0,
+    }
+    const r = calculateResults(inputs)
+
+    expect(r.jobsRequired).toBeCloseTo(62.5)
+    expect(r.appointmentsRequired).toBeCloseTo(156.25)
+    expect(r.leadsRequired).toBe(0)
+    expect(r.valuePerLead).toBe(0)
+  })
+
+  it('100% rates: jobs = appointments = leads', () => {
+    const inputs: MetricInputs = {
+      revenueGoal: 10000,
       averageTicket: 1000,
+      closeRate: 100,
+      bookingRate: 100,
     }
-    const result = calculateResults(inputs)
+    const r = calculateResults(inputs)
 
-    expect(result.bookedAppointments).toBe(50)
-    expect(result.jobsWon).toBe(50)
-    expect(result.monthlyRevenue).toBe(50000)
-    expect(result.annualRevenue).toBe(600000)
-    expect(result.valuePerLead).toBe(1000)
-    expect(result.valuePerJob).toBe(1000)
+    expect(r.jobsRequired).toBe(10)
+    expect(r.appointmentsRequired).toBe(10)
+    expect(r.leadsRequired).toBe(10)
+    expect(r.valuePerLead).toBe(1000)
   })
 
-  it('fractional rates produce correct decimal results', () => {
+  it('zero revenue goal: all pipeline counts are zero', () => {
     const inputs: MetricInputs = {
-      monthlyLeads: 10,
-      bookingRate: 33.3,
-      closingRate: 50,
-      averageTicket: 100,
+      revenueGoal: 0,
+      averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 60,
     }
-    const result = calculateResults(inputs)
+    const r = calculateResults(inputs)
 
-    expect(result.bookedAppointments).toBeCloseTo(3.33, 5)
-    expect(result.jobsWon).toBeCloseTo(1.665, 5)
-    expect(result.monthlyRevenue).toBeCloseTo(166.5, 5)
+    expect(r.jobsRequired).toBe(0)
+    expect(r.appointmentsRequired).toBe(0)
+    expect(r.leadsRequired).toBe(0)
+    expect(r.monthlyRevenue).toBe(0)
+    expect(r.annualRevenue).toBe(0)
+    expect(r.valuePerLead).toBe(0)
+  })
+
+  it('large values: $500k goal, $2000 ticket, 80% close, 90% booking', () => {
+    const inputs: MetricInputs = {
+      revenueGoal: 500000,
+      averageTicket: 2000,
+      closeRate: 80,
+      bookingRate: 90,
+    }
+    const r = calculateResults(inputs)
+
+    // 500000 / 2000 = 250 jobs
+    expect(r.jobsRequired).toBe(250)
+    // 250 / 0.80 = 312.5 appointments
+    expect(r.appointmentsRequired).toBeCloseTo(312.5)
+    // 312.5 / 0.90 = 347.222 leads
+    expect(r.leadsRequired).toBeCloseTo(347.222, 2)
+    expect(r.annualRevenue).toBe(6000000)
   })
 })
 
@@ -152,83 +149,88 @@ describe('calculateResults', () => {
 // ---------------------------------------------------------------------------
 
 describe('calculateDelta', () => {
-  const makeResults = (monthly: number, annual: number, vpl: number, vpj: number): CalculatedResults => ({
-    bookedAppointments: 0,
-    jobsWon: 0,
-    monthlyRevenue: monthly,
-    annualRevenue: annual,
-    valuePerLead: vpl,
-    valuePerJob: vpj,
-  })
-
-  it('projected > current: produces positive deltas', () => {
-    const current = makeResults(10000, 120000, 100, 500)
-    const projected = makeResults(19200, 230400, 192, 800)
-
+  it('positive growth: current $50k → projected $100k', () => {
+    const current = calculateResults({
+      revenueGoal: 50000,
+      averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 60,
+    })
+    const projected = calculateResults({
+      revenueGoal: 100000,
+      averageTicket: 1200,
+      closeRate: 55,
+      bookingRate: 75,
+    })
     const delta = calculateDelta(current, projected)
 
-    expect(delta.monthlyIncrease).toBeCloseTo(9200, 5)
-    expect(delta.monthlyIncreasePercent).toBeCloseTo(92, 5)
-    expect(delta.annualIncrease).toBeCloseTo(110400, 5)
-    expect(delta.annualIncreasePercent).toBeCloseTo(92, 5)
-    expect(delta.valuePerLeadIncrease).toBeCloseTo(92, 5)
-    expect(delta.valuePerJobIncrease).toBeCloseTo(300, 5)
+    expect(delta.monthlyIncrease).toBe(50000)
+    expect(delta.monthlyIncreasePercent).toBeCloseTo(100)
+    expect(delta.annualIncrease).toBe(600000)
+    expect(delta.annualIncreasePercent).toBeCloseTo(100)
+    expect(delta.valuePerLeadIncrease).toBeGreaterThan(0)
   })
 
-  it('projected < current: produces negative deltas', () => {
-    const current = makeResults(19200, 230400, 192, 800)
-    const projected = makeResults(10000, 120000, 100, 500)
-
-    const delta = calculateDelta(current, projected)
-
-    expect(delta.monthlyIncrease).toBeCloseTo(-9200, 5)
-    expect(delta.monthlyIncreasePercent).toBeCloseTo(-47.9166, 3)
-    expect(delta.annualIncrease).toBeCloseTo(-110400, 5)
-    expect(delta.annualIncreasePercent).toBeCloseTo(-47.9166, 3)
-    expect(delta.valuePerLeadIncrease).toBeCloseTo(-92, 5)
-    expect(delta.valuePerJobIncrease).toBeCloseTo(-300, 5)
-  })
-
-  it('identical current and projected: all deltas are zero', () => {
-    const current = makeResults(19200, 230400, 192, 800)
-    const projected = makeResults(19200, 230400, 192, 800)
-
-    const delta = calculateDelta(current, projected)
+  it('identical inputs: all deltas are zero', () => {
+    const inputs: MetricInputs = {
+      revenueGoal: 50000,
+      averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 60,
+    }
+    const r = calculateResults(inputs)
+    const delta = calculateDelta(r, r)
 
     expect(delta.monthlyIncrease).toBe(0)
     expect(delta.monthlyIncreasePercent).toBe(0)
     expect(delta.annualIncrease).toBe(0)
     expect(delta.annualIncreasePercent).toBe(0)
     expect(delta.valuePerLeadIncrease).toBe(0)
-    expect(delta.valuePerJobIncrease).toBe(0)
   })
 
-  it('current revenue is zero: percent increase stays 0 (no division by zero)', () => {
-    const current = makeResults(0, 0, 0, 0)
-    const projected = makeResults(5000, 60000, 50, 250)
-
+  it('negative growth: projected lower than current', () => {
+    const current = calculateResults({
+      revenueGoal: 100000,
+      averageTicket: 1200,
+      closeRate: 55,
+      bookingRate: 75,
+    })
+    const projected = calculateResults({
+      revenueGoal: 50000,
+      averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 60,
+    })
     const delta = calculateDelta(current, projected)
 
-    expect(delta.monthlyIncrease).toBe(5000)
-    expect(delta.monthlyIncreasePercent).toBe(0)   // guarded — current is 0
-    expect(delta.annualIncrease).toBe(60000)
-    expect(delta.annualIncreasePercent).toBe(0)    // guarded — current is 0
-    expect(delta.valuePerLeadIncrease).toBe(50)
-    expect(delta.valuePerJobIncrease).toBe(250)
+    expect(delta.monthlyIncrease).toBe(-50000)
+    expect(delta.monthlyIncreasePercent).toBeCloseTo(-50)
+    expect(delta.annualIncrease).toBe(-600000)
+    expect(delta.annualIncreasePercent).toBeCloseTo(-50)
+    expect(delta.valuePerLeadIncrease).toBeLessThan(0)
   })
 
-  it('uses full calculateResults output correctly end-to-end', () => {
-    const currentInputs: MetricInputs = { monthlyLeads: 100, bookingRate: 50, closingRate: 30, averageTicket: 500 }
-    const projectedInputs: MetricInputs = { monthlyLeads: 100, bookingRate: 60, closingRate: 40, averageTicket: 800 }
-
-    const current = calculateResults(currentInputs)
-    const projected = calculateResults(projectedInputs)
+  it('current revenue zero: percent increase stays 0 (guarded)', () => {
+    const current: CalculatedResults = {
+      jobsRequired: 0,
+      appointmentsRequired: 0,
+      leadsRequired: 0,
+      monthlyRevenue: 0,
+      annualRevenue: 0,
+      valuePerLead: 0,
+    }
+    const projected = calculateResults({
+      revenueGoal: 50000,
+      averageTicket: 800,
+      closeRate: 40,
+      bookingRate: 60,
+    })
     const delta = calculateDelta(current, projected)
 
-    // current: 15 jobs, $7500/mo, $90000/yr
-    // projected: 24 jobs, $19200/mo, $230400/yr
-    expect(delta.monthlyIncrease).toBeCloseTo(19200 - 7500, 5)
-    expect(delta.annualIncrease).toBeCloseTo(230400 - 90000, 5)
+    expect(delta.monthlyIncrease).toBe(50000)
+    expect(delta.monthlyIncreasePercent).toBe(0)
+    expect(delta.annualIncrease).toBe(600000)
+    expect(delta.annualIncreasePercent).toBe(0)
   })
 })
 
@@ -273,8 +275,8 @@ describe('formatPercent', () => {
     expect(formatPercent(15.5)).toBe('+15.5%')
   })
 
-  it('zero: treated as non-negative, prepends "+"', () => {
-    expect(formatPercent(0)).toBe('+0.0%')
+  it('zero: no "+" prefix', () => {
+    expect(formatPercent(0)).toBe('0.0%')
   })
 
   it('negative value: uses minus sign, no "+"', () => {
@@ -317,7 +319,7 @@ describe('formatNumber', () => {
 
   it('rounds to at most 1 decimal place', () => {
     expect(formatNumber(3.33)).toBe('3.3')
-    expect(formatNumber(9.95)).toBe('10')  // rounds up
+    expect(formatNumber(9.95)).toBe('10')
   })
 
   it('formats negative numbers', () => {

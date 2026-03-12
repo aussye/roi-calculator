@@ -26,16 +26,19 @@ export function ResultsPanel({ title, variant, results, compareAgainst }: Result
       </CardHeader>
       <CardContent className="pt-4 grid grid-cols-2 gap-x-8 gap-y-2">
         <MetricOutput
-          label="Booked Appointments"
-          value={results.bookedAppointments}
+          label="Jobs Required"
+          value={results.jobsRequired}
           format="number"
-          highlight={isHigher('bookedAppointments')}
         />
         <MetricOutput
-          label="Jobs Won"
-          value={results.jobsWon}
+          label="Appointments Required"
+          value={results.appointmentsRequired}
           format="number"
-          highlight={isHigher('jobsWon')}
+        />
+        <MetricOutput
+          label="Leads Required"
+          value={results.leadsRequired}
+          format="number"
         />
         <MetricOutput
           label="Monthly Revenue"
@@ -54,12 +57,6 @@ export function ResultsPanel({ title, variant, results, compareAgainst }: Result
           value={results.valuePerLead}
           format="currency"
           highlight={isHigher('valuePerLead')}
-        />
-        <MetricOutput
-          label="Value Per Job"
-          value={results.valuePerJob}
-          format="currency"
-          highlight={isHigher('valuePerJob')}
         />
       </CardContent>
     </Card>

@@ -1,17 +1,17 @@
 export interface MetricInputs {
-  monthlyLeads: number
-  bookingRate: number    // 0-100 (percentage)
-  closingRate: number    // 0-100 (percentage)
-  averageTicket: number  // dollar amount
+  revenueGoal: number      // monthly revenue target ($)
+  averageTicket: number    // average $ per job
+  closeRate: number        // 0-100, % of appointments that become jobs
+  bookingRate: number      // 0-100, % of leads that become appointments
 }
 
 export interface CalculatedResults {
-  bookedAppointments: number
-  jobsWon: number
+  jobsRequired: number
+  appointmentsRequired: number
+  leadsRequired: number
   monthlyRevenue: number
   annualRevenue: number
   valuePerLead: number
-  valuePerJob: number
 }
 
 export interface DeltaResults {
@@ -20,5 +20,4 @@ export interface DeltaResults {
   annualIncrease: number
   annualIncreasePercent: number
   valuePerLeadIncrease: number
-  valuePerJobIncrease: number
 }
