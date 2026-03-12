@@ -1,8 +1,8 @@
 'use client'
 
+import { type ChangeEvent } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { NumberInput } from './NumberInput'
-import { SliderInput } from './SliderInput'
 import type { MetricInputs } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +18,10 @@ export function MetricInputPanel({ title, variant, values, onChange }: MetricInp
 
   const updateField = (field: keyof MetricInputs, val: number) => {
     onChange({ ...values, [field]: val })
+  }
+
+  const handleSlider = (field: keyof MetricInputs) => (e: ChangeEvent<HTMLInputElement>) => {
+    updateField(field, Number(e.target.value))
   }
 
   return (
@@ -49,20 +53,62 @@ export function MetricInputPanel({ title, variant, values, onChange }: MetricInp
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <SliderInput
+          <RateSlider
             label="Close Rate"
             value={values.closeRate}
-            onChange={(v) => updateField('closeRate', v)}
-            variant={variant}
+            onChange={handleSlider('closeRate')}
+            isProjected={isProjected}
           />
-          <SliderInput
+          <RateSlider
             label="Booking Rate"
             value={values.bookingRate}
-            onChange={(v) => updateField('bookingRate', v)}
-            variant={variant}
+            onChange={handleSlider('bookingRate')}
+            isProjected={isProjected}
           />
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function RateSlider({
+  label,
+  value,
+  onChange,
+  isProjected,
+}: {
+  label: string
+  value: number
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void
+  isProjected: boolean
+}) {
+  const pct = Math.round(value)
+  const trackColor = isProjected ? '#3fb3d4' : '#595959'
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-[#595959]">{label}</span>
+        <span className={cn(
+          'text-xl font-bold tabular-nums',
+          isProjected ? 'text-[#3fb3d4]' : 'text-[#595959]'
+        )}>
+          {value}%
+        </span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={value}
+        onChange={onChange}
+        aria-label={label}
+        className="slider-input"
+        style={{
+          background: `linear-gradient(to right, ${trackColor} ${pct}%, #e5e7eb ${pct}%)`,
+        }}
+      />
+    </div>
   )
 }
