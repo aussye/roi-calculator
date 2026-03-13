@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MetricInputPanel } from './MetricInputPanel'
 import { ResultsPanel } from './ResultsPanel'
+import { ComparisonRow } from './ComparisonRow'
 import { ROISummary } from './ROISummary'
 import { calculateResults } from '@/lib/calculations'
 import { DEFAULTS } from '@/lib/defaults'
@@ -49,6 +50,11 @@ export function Calculator() {
           />
         </div>
       </div>
+
+      <ComparisonRow
+        currentResults={currentResults}
+        projectedResults={projectedResults}
+      />
 
       <ROISummary
         currentResults={currentResults}
