@@ -40,7 +40,7 @@ export function MetricInputPanel({ title, variant, values, onChange }: MetricInp
       <CardContent className="flex flex-col gap-6 pt-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <NumberInput
-            label="Revenue Goal"
+            label={isProjected ? 'Revenue Goal' : 'Current Revenue'}
             value={values.revenueGoal}
             onChange={(v) => updateField('revenueGoal', v)}
             prefix="$"
